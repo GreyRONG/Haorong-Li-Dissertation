@@ -108,7 +108,6 @@ class CellListMap:
 
         self.aj = np.array([_apply_min_speed(v, 0.1) for v in new_velocities])
 
-        # === 第三步：更新位置 ===
         new_positions = (self.positions + t * self.aj) % self.domain_size
         self.positions = new_positions
         self.build_cells()
@@ -315,23 +314,6 @@ def _compute_3body_velocity_mode4(args, velocities, domain_size, radius, cell_ma
     new_v = pair_sum / pair_count
     return _apply_min_speed(new_v, min_speed)
 
-# def _compute_new_position_from_velocity(args):
-#     i, positions, velocities, t, domain_size = args
-#     return (positions[i] + t * velocities[i]) % domain_size
-
-# def _compute_new_position_3body_from_mean(args):
-#     i, positions, mean_positions, t, domain_size = args
-#     pos_i = positions[i]
-#     mean_pos = mean_positions[i]
-
-#     delta = mean_pos - pos_i
-#     delta = np.where(delta > 0.5 * domain_size, delta - domain_size, delta)
-#     delta = np.where(delta < -0.5 * domain_size, delta + domain_size, delta)
-
-#     velocity = delta
-#     new_position = (pos_i + t * velocity) % domain_size
-#     return new_position
-
 def find_neighbors_for_id(args):
     idx, positions, box_size, radius = args
     positions = positions % box_size
@@ -455,16 +437,8 @@ if __name__ == '__main__':
     TARGET_IDS = [10]
 
     for step in range(steps):
-        # velocity_update_selector(cell_map, mode='3', min_speed=0.2)
-        # position_update_selector(cell_map, mode='1', t=5)
-        # position_update_selector(cell_map, mode='2', t=1.0, repel_dist=1)
-        # position_update_selector(cell_map, mode='3', t=2.0)
         velocity_update_selector(cell_map, mode=V_MODE, min_speed=6)
         position_update_selector(cell_map, mode=P_MODE, t=0.3)
-
-        # args_list = [(i, cell_map.positions, domain_size, radius) for i in range(N)]
-        # with multiprocessing.Pool() as pool:
-        #     neighbor_results_parallel = pool.map(find_neighbors_for_id, args_list)
 
         fig, ax = plt.subplots(figsize=(8, 8))
         ax.set_xlim(0, domain_size)
@@ -478,17 +452,6 @@ if __name__ == '__main__':
             x, y = cell_map.positions[i]
             vx, vy = cell_map.aj[i]
             draw_velocity_triangle(ax, x, y, vx, vy, cell_map.radius)
-
-        # neighbor_dict = dict(neighbor_results_parallel)
-        # for tid in [55]:
-        #     neighbors = neighbor_dict.get(tid, [])
-        #     x1, y1 = cell_map.positions[tid]
-        #     vx1, vy1 = cell_map.aj[tid]
-        #     draw_velocity_triangle(ax, x1, y1, vx1, vy1, cell_map.radius, color='red', alpha=0.95)
-        #     ax.plot([], [], color='red', marker='^', linestyle='None', label=f'Target {tid}')
-        #     for nid in neighbors:
-        #         x2, y2 = cell_map.positions[nid]
-        #         ax.plot([x1, x2], [y1, y2], color='red', linewidth=0.5, alpha=0.8)
 
         for tid in TARGET_IDS:
             x1, y1 = cell_map.positions[tid]
@@ -508,6 +471,6 @@ if __name__ == '__main__':
         plt.ylabel('Y Position')
         plt.title(f'Step {step}: Particle Visualization')
         plt.grid(True)
-        plt.savefig(f"mode_4_{step}.png", dpi=300, bbox_inches=None, pad_inches=0.1)
+        plt.savefig(f"update{step}.png", dpi=300, bbox_inches=None, pad_inches=0.1)
 
         plt.close()
